@@ -1,0 +1,41 @@
+# Byte-compiled / optimized / DLL files
+__pycache__/
+*.py[cod]
+*$py.class
+
+# Virtual environment
+.env
+.venv
+.env.*
+venv/
+.poetry/
+
+# VS Code, PyCharm
+.vscode/
+.idea/
+
+# Distribution / packaging
+build/
+dist/
+*.egg-info/
+.eggs/
+
+# Poetry
+poetry.lock
+
+# Pytest
+.pytest_cache/
+.mypy_cache/
+.cache/
+
+# Alembic
+alembic/versions/*.pyc
+
+# SQLite (на всякий случай)
+*.sqlite3
+
+# Docker
+docker-compose.override.yml
+
+# Logs
+*.log
