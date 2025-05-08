@@ -9,12 +9,11 @@ from src.core.celery_app import celery_app
 
 CBR_URL = "https://www.cbr-xml-daily.ru/daily_json.js"
 CACHE_KEY = "usd_rub_rate"
-TTL = 60 * 60  # 1 час
+TTL = 60 * 60
 
 logger = logging.getLogger(__name__)
 
 
-# ---------- async (для FastAPI) ----------
 async def _fetch_rate_from_cbr_async() -> float:
     async with httpx.AsyncClient(timeout=5) as client:
         r = await client.get(CBR_URL)
@@ -41,7 +40,6 @@ async def get_rate() -> float:
         await r.close()
 
 
-# ---------- sync (для Celery) ----------
 def _fetch_rate_from_cbr_sync() -> float:
     r = requests.get(CBR_URL, timeout=5)
     r.raise_for_status()
@@ -63,7 +61,6 @@ def get_rate_sync() -> float:
     return rate
 
 
-# ---------- Celery‑таска ----------
 @celery_app.task(name="src.services.currency.update_rate")
 def update_rate() -> None:
     try:

@@ -9,20 +9,16 @@ from loguru import logger
 from starlette.middleware.base import BaseHTTPMiddleware
 from starlette.requests import Request
 
-# ---------- RabbitMQ config -------------------------------------------------
-RABBIT_DSN = os.getenv("RABBIT_DSN")  # может быть None во время тестов
+RABBIT_DSN = os.getenv("RABBIT_DSN")
 _QUEUE = "logs_queue"
-_connection = None  # кешируем соединение
-_channel = None  # и сам канал
+_connection = None
+_channel = None
 
 
 def _get_channel():
-    """
-    Сингл‑тон‑канал к RabbitMQ. Возвращает None, если подключения нет.
-    """
     global _connection, _channel
 
-    if not RABBIT_DSN:  # нет DSN → «немой» режим
+    if not RABBIT_DSN:
         return None
 
     if _channel and _channel.is_open:
@@ -34,17 +30,13 @@ def _get_channel():
         _channel = _connection.channel()
         _channel.queue_declare(queue=_QUEUE, durable=True)
         return _channel
-    except Exception as exc:  # noqa: BLE001 – любая ошибка ⇒ warning + «немой»
+    except Exception as exc:
         logger.warning(f"RabbitMQ unavailable — log not sent ({exc})")
         _connection = _channel = None
         return None
 
 
 def publish_log(payload: dict) -> None:
-    """
-    Сериализует payload в JSON и отдаёт в очередь.
-    Если канал недоступен — молча игнорируем (уже залогировано warning).
-    """
     ch = _get_channel()
     if ch is None:
         return
@@ -54,13 +46,12 @@ def publish_log(payload: dict) -> None:
         routing_key=_QUEUE,
         body=json.dumps(payload).encode(),
         properties=pika.BasicProperties(
-            delivery_mode=2,  # persistent
+            delivery_mode=2,
             content_type="application/json",
         ),
     )
 
 
-# ---------- HTTP‑мидлварь ---------------------------------------------------
 class RequestLoggingMiddleware(BaseHTTPMiddleware):
     """
     Логируем <method path status time> и отправляем JSON‑лог в RabbitMQ.
@@ -81,7 +72,6 @@ class RequestLoggingMiddleware(BaseHTTPMiddleware):
             req_id=req_id, status=response.status_code, duration=f"{duration:.2f} ms"
         ).info("← response sent")
 
-        # -------- отправляем в очередь (не ломаемся при ошибке) -----------
         try:
             payload = {
                 "req_id": req_id,
@@ -92,7 +82,7 @@ class RequestLoggingMiddleware(BaseHTTPMiddleware):
                 "duration_ms": round(duration, 2),
             }
             publish_log(payload)
-        except Exception as exc:  # noqa: BLE001
+        except Exception as exc:
             logger.warning(f"Log publish failed: {exc}")
 
         return response

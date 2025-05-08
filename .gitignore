@@ -1,42 +1,24 @@
-########################################
-#  Python artefacts                    #
-########################################
 __pycache__/
 *.py[cod]
 *$py.class
 *.pyd
 *.so
 
-########################################
-#  Virtual‑envs & Poetry               #
-########################################
-# локальные/IDE venv’ы
 .venv/
 venv/
 .env
 .env.docker
 .poetry/
 !env_example
-#   ↓  ОСТАВЛЯЕМ, поэтому НЕ игнорируем!
-#!poetry.lock
 
-########################################
-#  IDE                                  #
-########################################
 .vscode/
 .idea/
 
-########################################
-#  Build / dist                        #
-########################################
 build/
 dist/
 .eggs/
 *.egg-info/
 
-########################################
-#  Testing / linters                   #
-########################################
 .pytest_cache/
 .mypy_cache/
 .cache/
@@ -48,32 +30,18 @@ nosetests.xml
 *.cover
 .hypothesis/
 
-########################################
-#  Database / runtime artefacts        #
-########################################
 *.sqlite3
-file::memory:       # временный SQLite‑файл
-celerybeat-schedule # runtime‑файл Celery Beat
+file::memory:
+celerybeat-schedule
 
-########################################
-#  Alembic                             #
-########################################
-alembic/versions/*.pyc    # байткод миграций
-# сами миграции (alembic.ini и alembic/**) НЕ игнорируем!
+alembic/versions/*.pyc
 
-########################################
-#  Docker                              #
-########################################
 docker-compose.override.yml
 
-########################################
-#  Logs & misc                         #
-########################################
 *.log
 *.log.*
 *.pid
 *.gz
-# случайные фиктивные файлы, которые у тебя появились
+
 CACHED
-celerybeat-schedule
-file::memory:
+

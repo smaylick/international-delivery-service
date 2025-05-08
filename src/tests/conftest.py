@@ -20,18 +20,13 @@ from src.db.base import Base
 from src.db.deps import get_async_session
 
 
-# ────────────────────────────── helpers ──────────────────────────────
 def unwrap(resp):
-    """
-    resp  ➜  body["data"]            (assert‑ы: 2xx и success=True)
-    """
     assert resp.status_code // 100 == 2, resp.text
     body = resp.json()
     assert body["success"] is True
     return body["data"]
 
 
-# ────────────────────────────── DB (async) ───────────────────────────
 DATABASE_URL = "sqlite+aiosqlite:///file::memory:?cache=shared"
 
 engine = create_async_engine(
@@ -57,7 +52,6 @@ async def setup_db():
         await conn.run_sync(Base.metadata.drop_all)
 
 
-# ────────────────────────────── TestClient ───────────────────────────
 @pytest.fixture(scope="function")
 def test_client(async_session: AsyncSession) -> TestClient:
     app.dependency_overrides[get_async_session] = lambda: async_session
@@ -66,7 +60,6 @@ def test_client(async_session: AsyncSession) -> TestClient:
     app.dependency_overrides.clear()
 
 
-# ─────────────────────── helper‑фикстура type_id ─────────────────────
 @pytest.fixture(scope="function")
 def create_package_type(test_client: TestClient):
     """
@@ -81,7 +74,6 @@ def create_package_type(test_client: TestClient):
     return _create_type
 
 
-# ─────────────────────────────── Redis mock ──────────────────────────
 @pytest.fixture(scope="session")
 def _fake_server():
     return fakeredis.FakeServer()
@@ -92,7 +84,6 @@ def fake_redis(monkeypatch, _fake_server):
     fake_async = fakeredis.aioredis.FakeRedis(server=_fake_server)
     fake_sync = fakeredis.FakeRedis(server=_fake_server)
 
-    # patch в двух режимах (async / sync)
     monkeypatch.setattr("src.services.currency.aioredis.Redis", lambda **_: fake_async)
     monkeypatch.setattr("src.services.currency.redis.Redis", lambda **_: fake_sync)
     monkeypatch.setattr(
@@ -105,7 +96,6 @@ def fake_redis(monkeypatch, _fake_server):
     fake_sync.close()
 
 
-# ────────────────────────── patch sync‑слоя / rate ──────────────────
 @pytest.fixture(autouse=True)
 def patch_sync_layer(monkeypatch):
     from src.tests.conftest import engine as async_engine
@@ -124,7 +114,6 @@ def patch_sync_layer(monkeypatch):
         raising=True,
     )
 
-    # фиксируем курс USD→RUB
     monkeypatch.setattr(
         "src.services.currency.get_rate_sync", lambda: 100.0, raising=True
     )
@@ -133,7 +122,6 @@ def patch_sync_layer(monkeypatch):
     )
 
 
-# ───────────────────── SQLite foreign keys (sync) ────────────────────
 @event.listens_for(engine.sync_engine, "connect")
 def _fk_pragma(dbapi_conn, _):
     dbapi_conn.execute("PRAGMA foreign_keys=ON")

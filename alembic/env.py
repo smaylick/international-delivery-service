@@ -4,7 +4,6 @@ from logging.config import fileConfig
 from sqlalchemy import create_engine, pool
 from alembic import context
 
-# подключаем src как корень
 sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), "..")))
 
 from src.core.settings import settings
@@ -14,7 +13,6 @@ import src.models  # noqa
 config = context.config
 fileConfig(config.config_file_name)
 
-# 👇 Используем sync движок только для Alembic
 config.set_main_option("sqlalchemy.url", settings.sync_db_url)
 target_metadata = Base.metadata
 

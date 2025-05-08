@@ -16,7 +16,6 @@ router = APIRouter(
 )
 
 
-# ─────────────── POST /package-types ───────────────
 @router.post("", status_code=status.HTTP_200_OK)
 async def create_package_type(
     payload: PackageTypeCreate,
@@ -40,7 +39,6 @@ async def create_package_type(
     )
 
 
-# ─────────────── GET /package-types ───────────────
 @router.get("", status_code=status.HTTP_200_OK)
 async def get_package_types(
     db: AsyncSession = Depends(get_async_session),

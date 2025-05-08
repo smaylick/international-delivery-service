@@ -20,9 +20,9 @@ async def test_create_package_type(test_client: TestClient):
 async def test_create_duplicate_package_type(test_client: TestClient):
     body = {"name": "Electronics"}
 
-    test_client.post("/package-types", json=body)  # первый раз
-    resp2 = test_client.post("/package-types", json=body)  # дубликат
-    assert resp2.status_code == HTTPStatus.BAD_REQUEST  # теперь 400
+    test_client.post("/package-types", json=body)
+    resp2 = test_client.post("/package-types", json=body)
+    assert resp2.status_code == HTTPStatus.BAD_REQUEST
 
 
 @pytest.mark.asyncio

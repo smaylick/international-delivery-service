@@ -10,7 +10,6 @@ depends_on: Union[str, Sequence[str], None] = None
 
 
 def upgrade() -> None:
-    # --- 1. Таблица типов посылок ---------------------------------
     op.create_table(
         "package_types",
         sa.Column("id", sa.Integer, primary_key=True),
@@ -18,7 +17,6 @@ def upgrade() -> None:
     )
     op.create_index("ix_package_types_id", "package_types", ["id"])
 
-    # --- 2. Таблица посылок ---------------------------------------
     op.create_table(
         "packages",
         sa.Column("id", sa.Integer, primary_key=True),

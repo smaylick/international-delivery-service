@@ -1,8 +1,3 @@
-"""
-Слушает RabbitMQ очередь logs_queue и пишет документы в MongoDB.
-Запуск внутри контейнера:  python -m src.workers.log_writer
-"""
-
 import json
 import os
 import time
@@ -18,10 +13,9 @@ DBNAME = os.getenv("MONGO_DB", "delivery_logs")
 mongo = MongoClient(MONGO)[DBNAME]
 
 params = pika.URLParameters(RABBIT)
-params.heartbeat = 0  # не обрывать idle‑коннект
+params.heartbeat = 0
 
-# ─── ждём, когда RabbitMQ станет доступен ─────────────────────────
-for attempt in range(1, 31):  # ~1 минуты ожидания
+for attempt in range(1, 31):
     try:
         conn = pika.BlockingConnection(params)
         break

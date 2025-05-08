@@ -23,14 +23,12 @@ router = APIRouter(
 )
 
 
-# ─────────────── POST /packages ───────────────
 @router.post("", status_code=status.HTTP_201_CREATED)
 async def register_package(
     request: Request,
     data: PackageCreate,
     db: AsyncSession = Depends(get_async_session),
 ):
-    # 1. проверяем, что type_id существует
     exists = await db.execute(
         select(PackageType.id).where(PackageType.id == data.type_id)
     )
@@ -40,13 +38,11 @@ async def register_package(
             detail=f"PackageType {data.type_id} does not exist",
         )
 
-    # 2. создаём посылку
     pkg = Package(session=request.state.session_id, **data.model_dump())
     db.add(pkg)
     await db.commit()
     await db.refresh(pkg)
 
-    # 3. единый формат ответа
     out = PackageRead.model_validate(pkg).model_dump()
     return JSONResponse(
         status_code=status.HTTP_201_CREATED,
@@ -54,7 +50,6 @@ async def register_package(
     )
 
 
-# ─────────────── GET /packages ───────────────
 @router.get("", status_code=status.HTTP_200_OK)
 async def get_packages(
     request: Request,
@@ -75,7 +70,6 @@ async def get_packages(
     return jsonable_encoder({"success": True, "data": items})
 
 
-# ───────────── GET /packages/{id} ─────────────
 @router.get("/{package_id}", status_code=status.HTTP_200_OK)
 async def get_package(
     request: Request,

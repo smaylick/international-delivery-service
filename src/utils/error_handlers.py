@@ -7,15 +7,14 @@ from starlette.status import HTTP_422_UNPROCESSABLE_ENTITY
 from loguru import logger
 
 
-# ───────────────────────────────────────────────────────────────
 def http_exception_handler(request: Request, exc: HTTPException):
-    logger.warning(  # ✅ f‑string
+    logger.warning(
         f"HTTPException → {exc.status_code} {request.method} {request.url.path} – {exc.detail}"
     )
     return JSONResponse(
         status_code=exc.status_code,
         content=jsonable_encoder(
-            {  # ✅ сериализуем
+            {
                 "success": False,
                 "message": exc.detail,
                 "details": [],

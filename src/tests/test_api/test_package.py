@@ -1,14 +1,10 @@
-# src/tests/test_api/test_package.py
 import pytest
 from http import HTTPStatus
 from fastapi.testclient import TestClient
 from sqlalchemy import text
-
-# удобный хелпер из conftest.py
 from src.tests.conftest import unwrap
 
 
-# ───────────────────────── positive flow ──────────────────────────
 @pytest.mark.asyncio
 async def test_create_package(test_client: TestClient, create_package_type):
     type_id = create_package_type("Electronics")
@@ -32,7 +28,6 @@ async def test_create_package(test_client: TestClient, create_package_type):
     assert "id" in data
 
 
-# ───────────────────────── get‑package (Не рассчитано) ─────────────────────────
 @pytest.mark.asyncio
 async def test_get_package_not_calculated(test_client: TestClient, create_package_type):
     type_id = create_package_type("Clothing")
@@ -46,11 +41,10 @@ async def test_get_package_not_calculated(test_client: TestClient, create_packag
 
     resp = test_client.get(f"/packages/{pkg_id}")
     assert resp.status_code == HTTPStatus.OK
-    payload = unwrap(resp)  # {"message": "Не рассчитано"}
+    payload = unwrap(resp)
     assert payload["message"] == "Не рассчитано"
 
 
-# ───────────────────────── get‑package (есть delivery_cost) ─────────────────────
 @pytest.mark.asyncio
 async def test_get_package_with_calculated_delivery(
     test_client: TestClient, create_package_type, async_session
@@ -64,7 +58,6 @@ async def test_get_package_with_calculated_delivery(
     }
     pkg_id = unwrap(test_client.post("/packages", json=body))["id"]
 
-    # правим вручную delivery_cost_rub
     await async_session.execute(
         text("UPDATE packages SET delivery_cost_rub = :c WHERE id = :i"),
         {"c": 500.0, "i": pkg_id},
@@ -79,32 +72,29 @@ async def test_get_package_with_calculated_delivery(
     assert data["delivery_cost_rub"] == 500.0
 
 
-# ───────────────────────── not‑found ─────────────────────────────
 @pytest.mark.asyncio
 async def test_get_package_not_found(test_client: TestClient):
     resp = test_client.get("/packages/99999")
     assert resp.status_code == HTTPStatus.NOT_FOUND
-    # при ошибках success=False и поле message
     assert resp.json()["message"] == "Package not found"
 
 
-# ───────────────────────── список + пагинация + фильтр ────────────
 @pytest.mark.parametrize(
     "page,page_size,flt,expect",
     [
         (1, 10, None, 3),
         (1, 2, None, 2),
         (2, 2, None, 1),
-        (1, 10, "type1", 1),  # Books
-        (1, 10, "type2", 2),  # Gadgets
+        (1, 10, "type1", 1),
+        (1, 10, "type2", 2),
     ],
 )
 @pytest.mark.asyncio
 async def test_get_packages_with_filter(
     test_client: TestClient, create_package_type, page, page_size, flt, expect
 ):
-    t1 = create_package_type("Books")  # «type1»
-    t2 = create_package_type("Gadgets")  # «type2»
+    t1 = create_package_type("Books")
+    t2 = create_package_type("Gadgets")
 
     seed = [
         {"name": "Book", "weight": 1.2, "content_cost_usd": 30, "type_id": t1},
@@ -125,14 +115,12 @@ async def test_get_packages_with_filter(
     assert len(unwrap(r)) == expect
 
 
-# ───────────────────────── валидационные / бизнес‑ошибки ──────────
 @pytest.mark.asyncio
 async def test_register_package_validation_errors(
     test_client: TestClient, create_package_type
 ):
     tid = create_package_type("Valid")
 
-    # pydantic‑ошибки → 422
     bad_pydantic = [
         {"name": "neg weight", "weight": -1, "content_cost_usd": 10, "type_id": tid},
         {"name": "zero cost", "weight": 1, "content_cost_usd": 0, "type_id": tid},
@@ -143,7 +131,6 @@ async def test_register_package_validation_errors(
             == HTTPStatus.UNPROCESSABLE_ENTITY
         )
 
-    # business‑валидация → 400
     r = test_client.post(
         "/packages",
         json={"name": "bad type", "weight": 1, "content_cost_usd": 10, "type_id": 9999},

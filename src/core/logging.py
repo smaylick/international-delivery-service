@@ -1,4 +1,3 @@
-# src/core/logging.py
 from pathlib import Path
 from loguru import logger
 import sys
@@ -14,7 +13,7 @@ def setup_logging():
     • file:   json‑строки (подойдут для ELK / Loki)
     • перехватываем стандартный logging.*
     """
-    logger.remove()  # убираем дефолтный handler
+    logger.remove()
 
     # → консоль
     logger.add(
@@ -29,19 +28,17 @@ def setup_logging():
         "<level>{message}</level>",
     )
 
-    # → файл (JSON)
     logger.add(
         LOG_DIR / "app.log",
         rotation="10 MB",
         retention="14 days",
         compression="zip",
-        serialize=True,  # пишет JSON‑строки
+        serialize=True,
         level="INFO",
         backtrace=True,
         enqueue=True,
     )
 
-    # переадресуем стандартный logging → Loguru
     class _Intercept(logging.Handler):
         def emit(self, record):
             logger_opt = logger.bind(request_id="std")
