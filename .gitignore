@@ -13,9 +13,9 @@ __pycache__/
 # локальные/IDE venv’ы
 .venv/
 venv/
-.env          # dotenv с секретами
-.env.docker   # отдельный dotenv для контейнера
-.poetry/      # служебная папка Poetry
+.env
+.env.docker
+.poetry/
 !env_example
 #   ↓  ОСТАВЛЯЕМ, поэтому НЕ игнорируем!
 #!poetry.lock
@@ -75,3 +75,5 @@ docker-compose.override.yml
 *.gz
 # случайные фиктивные файлы, которые у тебя появились
 CACHED
+celerybeat-schedule
+file::memory:
