@@ -1,0 +1,98 @@
+version: "3.9"
+
+services:
+  web:
+    build: .
+    command: ["web"]
+    volumes:   [".:/app"]
+    ports:     ["8020:8000"]
+    env_file:  [.env.docker]
+    environment:
+      - PYTHONUNBUFFERED=1
+    depends_on:
+      - db
+      - redis
+      - rabbit
+      - mongo
+
+  worker:
+    build: .
+    command: ["worker"]
+    volumes:   [".:/app"]
+    env_file:  [.env.docker]
+    depends_on:
+      - db
+      - redis
+      - rabbit
+    healthcheck:
+      test: ["CMD-SHELL", "celery -A src.core.celery_app inspect ping -d celery@$$HOSTNAME"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+
+  beat:
+    build: .
+    command: ["beat"]
+    volumes:   [".:/app"]
+    env_file:  [.env.docker]
+    depends_on:
+      - redis
+      - rabbit
+
+  db:
+    image: postgres:15
+    restart: unless-stopped
+    environment:
+      POSTGRES_DB:      delivery
+      POSTGRES_USER:    user
+      POSTGRES_PASSWORD: password
+    ports: ["5444:5432"]
+    volumes: [db_data:/var/lib/postgresql/data]
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U user -d delivery"]
+      interval: 5s
+      timeout: 5s
+      retries: 5
+
+  redis:
+    image: redis:7
+    command: ["redis-server", "--save", "", "--appendonly", "no"]
+    ports: ["6386:6379"]
+
+  rabbit:
+    image: rabbitmq:3.13-management
+    restart: unless-stopped
+    ports:
+      - "5681:5672"
+      - "15681:15672"
+    healthcheck:
+      test: ["CMD-SHELL", "rabbitmq-diagnostics -q ping"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+
+  mongo:
+    image: mongo:7
+    restart: unless-stopped
+    ports: ["27026:27017"]
+    volumes: [mongo_data:/data/db]
+    healthcheck:
+      test: ["CMD-SHELL", "mongosh --quiet --eval 'db.runCommand({ ping: 1 })'"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+
+  log_worker:
+    build: .
+    command: ["log_worker"]
+    env_file:  [.env.docker]
+    restart: unless-stopped
+    depends_on:
+      rabbit:
+        condition: service_healthy
+      mongo:
+        condition: service_healthy
+
+volumes:
+  db_data:
+  mongo_data:

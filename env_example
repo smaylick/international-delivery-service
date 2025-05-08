@@ -1,0 +1,15 @@
+DB_HOST=db
+DB_PORT=5432
+DB_NAME=delivery
+DB_USER=user
+DB_PASS=password
+DB_URL=postgresql+asyncpg://user:password@db:5432/delivery
+
+REDIS_HOST=redis
+REDIS_PORT=6379
+REDIS_URL=redis://redis:6379/0
+
+RABBIT_DSN=amqp://guest:guest@rabbit:5672/
+
+MONGO_DSN=mongodb://mongo:27017
+MONGO_DB=delivery_logs
