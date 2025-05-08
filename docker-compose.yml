@@ -1,33 +1,106 @@
-version: '3.8'
-
 services:
+  # ────────────────────────  APP  ────────────────────────
   web:
     build: .
-    volumes:
-      - .:/app
-    ports:
-      - "8000:8000"
+    command: ["web"]
+    volumes:   [".:/app"]
+    ports:     ["8000:8000"]
+    env_file:  [.env.docker]
     environment:
       - PYTHONUNBUFFERED=1
     depends_on:
       - db
       - redis
+      - rabbit
+      - mongo
 
+  # Celery worker
+  worker:
+    build: .
+    command: ["worker"]
+    volumes:   [".:/app"]
+    env_file:  [.env.docker]
+    depends_on:
+      - db
+      - redis
+      - rabbit
+    healthcheck:
+      test: ["CMD-SHELL", "celery -A src.core.celery_app inspect ping -d celery@$$HOSTNAME"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+
+  # Celery beat (периодические задачи)
+  beat:
+    build: .
+    command: ["beat"]
+    volumes:   [".:/app"]
+    env_file:  [.env.docker]
+    depends_on:
+      - redis
+      - rabbit
+
+  # ────────────────────────  DB  ────────────────────────
   db:
     image: postgres:15
+    restart: unless-stopped
     environment:
-      POSTGRES_DB: delivery
-      POSTGRES_USER: user
+      POSTGRES_DB:      delivery
+      POSTGRES_USER:    user
       POSTGRES_PASSWORD: password
-    ports:
-      - "5432:5432"
-    volumes:
-      - db_data:/var/lib/postgresql/data
+    ports: ["5432:5432"]
+    volumes: [db_data:/var/lib/postgresql/data]
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U user -d delivery"]
+      interval: 5s
+      timeout: 5s
+      retries: 5
 
+  # ───────────────────────  Redis  ──────────────────────
   redis:
     image: redis:7
+    command: ["redis-server", "--save", "", "--appendonly", "no"]
+    ports: ["6380:6379"]
+
+  # ──────────────────────  RabbitMQ  ────────────────────
+  rabbit:
+    image: rabbitmq:3.13-management            # web‑UI на :15672
+    restart: unless-stopped
     ports:
-      - "6379:6379"
+      - "5672:5672"    # AMQP
+      - "15672:15672"  # UI
+    healthcheck:
+      test: ["CMD-SHELL", "rabbitmq-diagnostics -q ping"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+
+  # ──────────────────────  MongoDB  ─────────────────────
+  mongo:
+    image: mongo:7
+    restart: unless-stopped
+    ports: ["27017:27017"]
+    volumes: [mongo_data:/data/db]
+    healthcheck:
+      test: ["CMD-SHELL", "mongosh --quiet --eval 'db.runCommand({ ping: 1 })'"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+
+  # ───── Воркер, который пишет логи из RabbitMQ в Mongo ─────
+  log_worker:
+    build: .
+    command: ["log_worker"]
+    env_file:  [.env.docker]
+
+    restart: unless-stopped
+
+    depends_on:
+      rabbit:
+        condition: service_healthy
+      mongo:
+        condition: service_healthy
 
 volumes:
   db_data:
+  mongo_data:

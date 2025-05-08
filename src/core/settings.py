@@ -1,4 +1,8 @@
+from dotenv import load_dotenv
 from pydantic_settings import BaseSettings
+from functools import cached_property
+
+load_dotenv()
 
 
 class Settings(BaseSettings):
@@ -11,15 +15,16 @@ class Settings(BaseSettings):
     REDIS_HOST: str
     REDIS_PORT: int
 
-    @property
-    def db_url(self) -> str:
-        return (
-            f"postgresql+asyncpg://{self.DB_USER}:{self.DB_PASS}"
-            f"@{self.DB_HOST}:{self.DB_PORT}/{self.DB_NAME}"
-        )
-
     class Config:
         env_file = ".env"
+
+    @cached_property
+    def db_url(self) -> str:
+        return f"postgresql+asyncpg://{self.DB_USER}:{self.DB_PASS}@{self.DB_HOST}:{self.DB_PORT}/{self.DB_NAME}"
+
+    @cached_property
+    def sync_db_url(self) -> str:
+        return f"postgresql+psycopg2://{self.DB_USER}:{self.DB_PASS}@{self.DB_HOST}:{self.DB_PORT}/{self.DB_NAME}"
 
 
 settings = Settings()

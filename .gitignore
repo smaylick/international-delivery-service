@@ -1,41 +1,77 @@
-# Byte-compiled / optimized / DLL files
+########################################
+#  Python artefacts                    #
+########################################
 __pycache__/
 *.py[cod]
 *$py.class
+*.pyd
+*.so
 
-# Virtual environment
-.env
-.venv
-.env.*
+########################################
+#  Virtual‑envs & Poetry               #
+########################################
+# локальные/IDE venv’ы
+.venv/
 venv/
-.poetry/
+.env          # dotenv с секретами
+.env.docker   # отдельный dotenv для контейнера
+.poetry/      # служебная папка Poetry
+!env_example
+#   ↓  ОСТАВЛЯЕМ, поэтому НЕ игнорируем!
+#!poetry.lock
 
-# VS Code, PyCharm
+########################################
+#  IDE                                  #
+########################################
 .vscode/
 .idea/
 
-# Distribution / packaging
+########################################
+#  Build / dist                        #
+########################################
 build/
 dist/
-*.egg-info/
 .eggs/
+*.egg-info/
 
-# Poetry
-poetry.lock
-
-# Pytest
+########################################
+#  Testing / linters                   #
+########################################
 .pytest_cache/
 .mypy_cache/
 .cache/
+.coverage
+.coverage.*
+nosetests.xml
+*.cov
+*coverage*.xml
+*.cover
+.hypothesis/
 
-# Alembic
-alembic/versions/*.pyc
-
-# SQLite (на всякий случай)
+########################################
+#  Database / runtime artefacts        #
+########################################
 *.sqlite3
+file::memory:       # временный SQLite‑файл
+celerybeat-schedule # runtime‑файл Celery Beat
 
-# Docker
+########################################
+#  Alembic                             #
+########################################
+alembic/versions/*.pyc    # байткод миграций
+# сами миграции (alembic.ini и alembic/**) НЕ игнорируем!
+
+########################################
+#  Docker                              #
+########################################
 docker-compose.override.yml
 
-# Logs
+########################################
+#  Logs & misc                         #
+########################################
 *.log
+*.log.*
+*.pid
+*.gz
+# случайные фиктивные файлы, которые у тебя появились
+CACHED
